@@ -2,14 +2,14 @@ import { Module, DynamicModule, Logger, ModuleMetadata, FactoryProvider, Global 
 import IORedis, { Redis, RedisOptions } from 'ioredis'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 
-export const REDIS = Symbol('REDIS')
+export const RedisToken = Symbol('Redis')
 
 @Global()
 @Module({})
 class RedisModule {
   static async registerAsync({ useFactory, imports, inject }: RedisAsyncModuleOptions): Promise<DynamicModule> {
     const redisProvider = {
-      provide: REDIS,
+      provide: RedisToken,
       useFactory: async (...args: any[]) => {
         const { connectionOptions, onClientReady } = await useFactory(...args)
         const client = new IORedis(connectionOptions)

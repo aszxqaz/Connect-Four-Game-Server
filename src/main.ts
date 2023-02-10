@@ -1,14 +1,33 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import * as passport from 'passport';
+import { AppModule } from './app.module';
+import { getClientUrl } from './helpers';
+import { SessionToken } from './session/session.provider';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(new ValidationPipe())
-  console.log(process.env)
 
-  // app.use(session)
+  const configService = app.get(ConfigService);
+  const session = app.get(SessionToken);
 
+  app.enableCors({
+    origin: getClientUrl(configService),
+    credentials: true,
+  });
+
+  app.useGlobalPipes(new ValidationPipe());
+  // app.use(cookieParser(configService.get('SESSION_COOKIE_SECRET')));
+  app.use(session);
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+    }),
+  );
 
   await app.listen(process.env.PORT || 3000);
 }
