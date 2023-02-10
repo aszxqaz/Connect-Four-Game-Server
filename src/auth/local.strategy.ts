@@ -11,6 +11,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(username: string) {
+    console.log(username)
     return { username };
   }
 }
