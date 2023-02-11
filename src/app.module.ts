@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { redisModule } from './redis/redis.module';
 import { SessionModule } from './session/session.module';
 import { AppController } from './app.controller';
+import { GameModule } from './game/game.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AppController } from './app.controller';
     AuthModule,
     redisModule,
     SessionModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [],

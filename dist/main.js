@@ -8,6 +8,7 @@ const passport = require("passport");
 const app_module_1 = require("./app.module");
 const helpers_1 = require("./helpers");
 const session_provider_1 = require("./session/session.provider");
+const websocket_adapter_1 = require("./websocket-adapter");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
@@ -23,6 +24,7 @@ async function bootstrap() {
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
     }));
+    app.useWebSocketAdapter(new websocket_adapter_1.SocketIOAdapter(app));
     await app.listen(process.env.PORT || 4000);
 }
 bootstrap();

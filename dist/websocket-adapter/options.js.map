@@ -1,0 +1,1 @@
+{"version":3,"file":"options.js","sourceRoot":"","sources":["../../src/websocket-adapter/options.ts"],"names":[],"mappings":";;;AAEA,wCAA2C;AAEpC,MAAM,gBAAgB,GAAG,CAC9B,cAA6B,EAC7B,aAA4B,EACb,EAAE,CAAC,iCACf,cAAc,KACjB,IAAI,EAAE;QACJ,MAAM,EAAE,IAAA,sBAAY,EAAC,aAAa,CAAC;QACnC,WAAW,EAAE,IAAI;KAClB,EACD,YAAY,EAAE,IAAI,IAClB,CAAC;AAVU,QAAA,gBAAgB,oBAU1B"}

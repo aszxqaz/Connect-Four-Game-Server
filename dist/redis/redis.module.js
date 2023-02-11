@@ -13,13 +13,20 @@ const ioredis_1 = require("ioredis");
 const config_1 = require("@nestjs/config");
 exports.RedisToken = Symbol('Redis');
 let RedisModule = RedisModule_1 = class RedisModule {
-    static async registerAsync({ useFactory, imports, inject }) {
+    static async registerAsync({ useFactory, imports, inject, }) {
+        const logger = new common_1.Logger('RedisModule');
         const redisProvider = {
             provide: exports.RedisToken,
             useFactory: async (...args) => {
                 const { connectionOptions, onClientReady } = await useFactory(...args);
                 const client = new ioredis_1.default(connectionOptions);
-                onClientReady === null || onClientReady === void 0 ? void 0 : onClientReady(client);
+                try {
+                    await client.connect();
+                    logger.log(`Connected to Redis on ${client.options.host}:${client.options.port}`);
+                }
+                catch (e) {
+                    logger.error('Redis Client Error: ', e);
+                }
                 return client;
             },
             inject,
@@ -39,21 +46,15 @@ RedisModule = RedisModule_1 = __decorate([
 exports.redisModule = RedisModule.registerAsync({
     imports: [config_1.ConfigModule],
     useFactory: async (configService) => {
-        const logger = new common_1.Logger('RedisModule');
         return {
             connectionOptions: {
                 host: configService.get('REDISHOST'),
                 port: configService.get('REDISPORT'),
                 username: configService.get('REDISUSER'),
                 password: configService.get('REDISPASSWORD'),
+                lazyConnect: true,
             },
             onClientReady: (client) => {
-                client.on('error', (err) => {
-                    logger.error('Redis Client Error: ', err);
-                });
-                client.on('connect', async () => {
-                    logger.log(`Connected to Redis on ${client.options.host}:${client.options.port}`);
-                });
             },
         };
     },

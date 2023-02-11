@@ -6,6 +6,7 @@ import * as passport from 'passport';
 import { AppModule } from './app.module';
 import { getClientUrl } from './helpers';
 import { SessionToken } from './session/session.provider';
+import { SocketIOAdapter } from './websocket-adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,12 +23,13 @@ async function bootstrap() {
   app.use(session);
   app.use(passport.initialize());
   app.use(passport.session());
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
     }),
   );
+
+  app.useWebSocketAdapter(new SocketIOAdapter(app))
 
   await app.listen(process.env.PORT || 4000);
 }

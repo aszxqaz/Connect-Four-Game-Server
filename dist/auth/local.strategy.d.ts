@@ -4,6 +4,7 @@ export declare class LocalStrategy extends LocalStrategy_base {
     constructor();
     validate(username: string): Promise<{
         username: string;
+        id: string;
     }>;
 }
 export {};

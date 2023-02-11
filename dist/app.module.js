@@ -13,6 +13,7 @@ const config_1 = require("@nestjs/config");
 const redis_module_1 = require("./redis/redis.module");
 const session_module_1 = require("./session/session.module");
 const app_controller_1 = require("./app.controller");
+const game_module_1 = require("./game/game.module");
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -24,6 +25,7 @@ AppModule = __decorate([
             auth_module_1.AuthModule,
             redis_module_1.redisModule,
             session_module_1.SessionModule,
+            game_module_1.GameModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [],

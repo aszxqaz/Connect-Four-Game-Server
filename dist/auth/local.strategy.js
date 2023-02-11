@@ -13,6 +13,7 @@ exports.LocalStrategy = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_local_1 = require("passport-local");
+const uuid_1 = require("uuid");
 let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)(passport_local_1.Strategy) {
     constructor() {
         super({
@@ -20,8 +21,7 @@ let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)
         });
     }
     async validate(username) {
-        console.log(`validate: ${username}`);
-        return { username };
+        return { username, id: (0, uuid_1.v4)() };
     }
 };
 LocalStrategy = __decorate([

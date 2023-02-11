@@ -6,20 +6,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LocalGuard = void 0;
+exports.GameModule = void 0;
 const common_1 = require("@nestjs/common");
-const passport_1 = require("@nestjs/passport");
-let LocalGuard = class LocalGuard extends (0, passport_1.AuthGuard)('local') {
-    async canActivate(context) {
-        const request = context.switchToHttp().getRequest();
-        request.body.password = "12345";
-        const result = (await super.canActivate(context));
-        await super.logIn(request);
-        return result;
-    }
+const game_gateway_1 = require("./game.gateway");
+const game_service_1 = require("./game.service");
+let GameModule = class GameModule {
 };
-LocalGuard = __decorate([
-    (0, common_1.Injectable)()
-], LocalGuard);
-exports.LocalGuard = LocalGuard;
-//# sourceMappingURL=local.guard.js.map
+GameModule = __decorate([
+    (0, common_1.Module)({
+        providers: [game_gateway_1.GameGateway, game_service_1.GameService]
+    })
+], GameModule);
+exports.GameModule = GameModule;
+//# sourceMappingURL=game.module.js.map
