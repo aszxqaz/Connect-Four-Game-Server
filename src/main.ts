@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import * as cookieParser from 'cookie-parser';
 import * as passport from 'passport';
 import { AppModule } from './app.module';
 import { getClientUrl } from './helpers';
@@ -17,8 +18,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.useGlobalPipes(new ValidationPipe());
-  // app.use(cookieParser(configService.get('SESSION_COOKIE_SECRET')));
+  app.use(cookieParser(configService.get('SESSION_COOKIE_SECRET')));
   app.use(session);
   app.use(passport.initialize());
   app.use(passport.session());
@@ -29,6 +29,6 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(process.env.PORT || 4000);
 }
 bootstrap();

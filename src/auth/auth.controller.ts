@@ -17,7 +17,7 @@ export class AuthController {
   public async login(@Req() req: RequestWithUser) {
     return {
       user: {
-        username: req.user.username,
+        username: req.user?.username,
       },
     };
   }

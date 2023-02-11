@@ -9,21 +9,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppController = void 0;
+exports.LocalStrategy = void 0;
 const common_1 = require("@nestjs/common");
-let AppController = class AppController {
-    hello() {
-        throw new common_1.UnauthorizedException();
+const passport_1 = require("@nestjs/passport");
+const passport_local_1 = require("passport-local");
+let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)(passport_local_1.Strategy) {
+    constructor() {
+        super({
+            usernameField: 'username',
+        });
+    }
+    async validate(username) {
+        console.log(`validate: ${username}`);
+        return { username };
     }
 };
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], AppController.prototype, "hello", null);
-AppController = __decorate([
-    (0, common_1.Controller)()
-], AppController);
-exports.AppController = AppController;
-//# sourceMappingURL=app.controller.js.map
+LocalStrategy = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [])
+], LocalStrategy);
+exports.LocalStrategy = LocalStrategy;
+//# sourceMappingURL=local.strategy.js.map
