@@ -21,17 +21,62 @@ let GameService = class GameService {
     constructor(redisClient) {
         this.redisClient = redisClient;
     }
-    async createGame(userId) {
+    async createPendingGame(userId) {
         const gameId = (0, uuid_1.v4)();
         console.log(gameId);
-        await this.redisClient.set(this.getPendingUserKey(userId), gameId);
-        await this.redisClient.set(this.getPendingGameKey(gameId), userId);
+        await this.redisClient.set(this.getUserToGameKey(userId, 'pending'), gameId);
+        await this.redisClient.set(this.getGameToUserKey(gameId, 'pending'), userId);
     }
-    getPendingGameKey(gameId) {
-        return `pg:${gameId}`;
+    async removeGame(gameId, state) {
+        const gameKey = this.getGameToUserKey(gameId, state);
+        const userId = await this.redisClient.get(gameKey);
+        const userKey = this.getUserToGameKey(userId, state);
+        await this.redisClient.del(gameKey, gameKey, userKey);
     }
-    getPendingUserKey(userId) {
-        return `pu:${userId}`;
+    async findGameByUser(userId, state) {
+        return this.redisClient.get(this.getUserToGameKey(userId, state));
+    }
+    async findFirstPendingGame() {
+        const games = await this.redisClient.keys(this.getGameToUserKey('*', 'pending'));
+        if (!games.length)
+            return null;
+        const gameId = games[0].replace(this.getGameToUserKey('', 'pending'), '');
+        const userId = await this.redisClient.get(games[0]);
+        return {
+            gameId,
+            userId,
+        };
+    }
+    async createActiveGame(gameId, userId1, userId2) {
+        const board = new Array(42).fill(0);
+        const results = await Promise.all([
+            this.setUserToGame(userId1, gameId, 'active'),
+            this.setUserToGame(userId2, gameId, 'active'),
+            this.redisClient.rpush(this.getActiveGameStateKey(gameId), ...board),
+        ]);
+        return {
+            userId1,
+            userId2,
+            gameId,
+        };
+    }
+    setGameToUser(gameId, userId, state) {
+        this.redisClient.set(this.getGameToUserKey(gameId, state), userId);
+    }
+    setUserToGame(userId, gameId, state) {
+        this.redisClient.set(this.getUserToGameKey(userId, state), gameId);
+    }
+    getGameToUserKey(gameId, state) {
+        return `${state}:${gameId}`;
+    }
+    getUserToGameKey(userId, state) {
+        return `${state}:${userId}`;
+    }
+    getActiveGameToUserKey(gameId) {
+        return `act-game:${gameId}`;
+    }
+    getActiveGameStateKey(gameId) {
+        return `gamestate:${gameId}`;
     }
 };
 GameService = __decorate([

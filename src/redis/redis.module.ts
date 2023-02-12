@@ -25,7 +25,7 @@ class RedisModule {
       provide: RedisToken,
       useFactory: async (...args: any[]) => {
         const { connectionOptions, onClientReady } = await useFactory(...args);
-        const client = new IORedis(connectionOptions);
+        const client = new IORedis(connectionOptions)
         try {
           await client.connect();
           logger.log(
@@ -34,6 +34,7 @@ class RedisModule {
         } catch (e) {
           logger.error('Redis Client Error: ', e);
         }
+        await client.flushall()
         return client;
       },
       inject,

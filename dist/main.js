@@ -9,6 +9,8 @@ const app_module_1 = require("./app.module");
 const helpers_1 = require("./helpers");
 const session_provider_1 = require("./session/session.provider");
 const websocket_adapter_1 = require("./websocket-adapter");
+const morgan = require("morgan");
+const bodyParser = require("body-parser");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
@@ -17,6 +19,8 @@ async function bootstrap() {
         origin: (0, helpers_1.getClientUrl)(configService),
         credentials: true,
     });
+    app.use(morgan('dev'));
+    app.use(bodyParser.json({ limit: '50kb' }));
     app.use(cookieParser(configService.get('SESSION_COOKIE_SECRET')));
     app.use(session);
     app.use(passport.initialize());

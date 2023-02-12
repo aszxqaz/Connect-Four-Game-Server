@@ -27,6 +27,7 @@ let RedisModule = RedisModule_1 = class RedisModule {
                 catch (e) {
                     logger.error('Redis Client Error: ', e);
                 }
+                await client.flushall();
                 return client;
             },
             inject,
