@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
-import { CreateGameArgs } from './types';
 import { GameLogic } from './BoardLogic';
+import { CreateGameArgs } from './types';
 export declare class GameService {
     private readonly redisClient;
     constructor(redisClient: Redis);

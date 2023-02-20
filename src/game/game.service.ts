@@ -1,9 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { RedisToken } from 'src/redis/redis.module';
-import { v4 } from 'uuid';
-import { ActiveGameState, CreateGameArgs, FindGameOpts } from './types';
 import { GameLogic } from './BoardLogic';
+import { ActiveGameState, CreateGameArgs } from './types';
 
 @Injectable()
 export class GameService {
