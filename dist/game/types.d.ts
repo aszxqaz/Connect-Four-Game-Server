@@ -1,4 +1,3 @@
-import { GameLogic } from "./BoardLogic";
 export type FindGameOpts = {
     userId: string;
 } | {
@@ -30,5 +29,8 @@ export type GameplayResponse = {
     isTurn: boolean;
     isFirst: boolean;
     last?: number;
-    winner?: GameLogic['winner'];
+    winner?: {
+        userId: string;
+        indeces: number[];
+    } | null;
 };
