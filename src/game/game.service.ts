@@ -2,24 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { RedisToken } from 'src/redis/redis.module';
 import { v4 } from 'uuid';
-import { FindGameOpts } from './types';
+import { ActiveGameState, CreateGameArgs, FindGameOpts } from './types';
+import { GameLogic } from './BoardLogic';
 
 @Injectable()
 export class GameService {
   constructor(@Inject(RedisToken) private readonly redisClient: Redis) {}
-
-  public async createPendingGame(userId: string) {
-    const gameId = v4();
-    console.log(gameId);
-    await this.redisClient.set(
-      this.getUserToGameKey(userId, 'pending'),
-      gameId,
-    );
-    await this.redisClient.set(
-      this.getGameToUserKey(gameId, 'pending'),
-      userId,
-    );
-  }
 
   public async removeGame(gameId: string, state: 'pending' | 'active') {
     const gameKey = this.getGameToUserKey(gameId, state);
@@ -32,34 +20,40 @@ export class GameService {
     return this.redisClient.get(this.getUserToGameKey(userId, state));
   }
 
-  public async findFirstPendingGame() {
-    const games = await this.redisClient.keys(
-      this.getGameToUserKey('*', 'pending'),
-    );
-    if (!games.length) return null;
-    const gameId = games[0].replace(this.getGameToUserKey('', 'pending'), '');
-    const userId = await this.redisClient.get(games[0]);
+  public async createActiveGame(data: CreateGameArgs) {
+    const { gameId, userId1, userId2, username1, username2 } = data;
+    const first = Math.random() < 0.5 ? userId1 : userId2;
+
+    const results = await Promise.all([
+      this.setInitialBoardToGame(gameId),
+      this.setActiveGameState(data.gameId, {
+        first,
+        turn: first,
+        userId1,
+        userId2,
+        username1,
+        username2,
+      }),
+    ]);
+
     return {
+      board: results[0].board,
+      turn: first,
+      first,
+      userId1,
+      userId2,
+      username1,
+      username2,
       gameId,
-      userId,
     };
   }
 
-  public async createActiveGame(
-    gameId: string,
-    userId1: string,
-    userId2: string,
-  ) {
-    const board = new Array(42).fill(0);
-    const results = await Promise.all([
-      this.setUserToGame(userId1, gameId, 'active'),
-      this.setUserToGame(userId2, gameId, 'active'),
-      this.redisClient.rpush(this.getActiveGameStateKey(gameId), ...board),
-    ]);
+  public async getGameState(gameId: string) {
+    const board = await this.getActiveGameBoard(gameId);
+    const info = await this.getActiveGameInfo(gameId);
     return {
-      userId1,
-      userId2,
-      gameId,
+      board,
+      ...info,
     };
   }
 
@@ -71,12 +65,47 @@ export class GameService {
     this.redisClient.set(this.getGameToUserKey(gameId, state), userId);
   }
 
-  private setUserToGame(
-    userId: string,
-    gameId: string,
-    state: 'pending' | 'active',
-  ) {
-    this.redisClient.set(this.getUserToGameKey(userId, state), gameId);
+  private getPlayersByGame(gameId: string) {
+    return this.redisClient.lrange(this.getKeyActiveGamePlayers(gameId), 0, -1);
+  }
+
+  private getActiveGameBoard(gameId: string) {
+    return this.redisClient.lrange(this.getKeyActiveGameBoard(gameId), 0, -1);
+  }
+
+  private getGameTurn(gameId: string) {
+    return this.redisClient.get(this.getKeyActiveGameTurn(gameId));
+  }
+
+  private setPlayersToGame(gameId: string, userId1: string, userdId2: string) {
+    this.redisClient.rpush(
+      this.getKeyActiveGamePlayers(gameId),
+      userId1,
+      userdId2,
+    );
+  }
+
+  public applyChanges(gameId: string, game: GameLogic) {
+    return Promise.all([
+      this.redisClient.lset(
+        `gameboard:${gameId}`,
+        game.last,
+        game.board[game.last],
+      ),
+      this.redisClient.hset(`gamestate:${gameId}`, 'turn', game.state.turn),
+    ]);
+  }
+
+  private setInitialBoardToGame(gameId: string) {
+    const board = new Array(42).fill('0');
+    const result = this.redisClient.rpush(
+      this.getKeyActiveGameBoard(gameId),
+      ...board,
+    );
+    return {
+      result,
+      board,
+    };
   }
 
   private getGameToUserKey(gameId: string, state: 'pending' | 'active') {
@@ -87,11 +116,29 @@ export class GameService {
     return `${state}:${userId}`;
   }
 
-  private getActiveGameToUserKey(gameId: string) {
-    return `act-game:${gameId}`;
+  private setActiveGameState(gameId: string, state: ActiveGameState) {
+    return this.redisClient.hset(this.getKeyActiveGameState(gameId), state);
   }
 
-  private getActiveGameStateKey(gameId: string) {
+  private getActiveGameInfo(gameId: string) {
+    return this.redisClient.hgetall(
+      this.getKeyActiveGameState(gameId),
+    ) as Promise<ActiveGameState>;
+  }
+
+  private getKeyActiveGamePlayers(gameId: string) {
+    return `gameplayers:${gameId}`;
+  }
+
+  private getKeyActiveGameBoard(gameId: string) {
+    return `gameboard:${gameId}`;
+  }
+
+  private getKeyActiveGameTurn(gameId: string) {
+    return `gameturn:${gameId}`;
+  }
+
+  private getKeyActiveGameState(gameId: string) {
     return `gamestate:${gameId}`;
   }
 }

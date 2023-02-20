@@ -16,16 +16,9 @@ exports.GameService = void 0;
 const common_1 = require("@nestjs/common");
 const ioredis_1 = require("ioredis");
 const redis_module_1 = require("../redis/redis.module");
-const uuid_1 = require("uuid");
 let GameService = class GameService {
     constructor(redisClient) {
         this.redisClient = redisClient;
-    }
-    async createPendingGame(userId) {
-        const gameId = (0, uuid_1.v4)();
-        console.log(gameId);
-        await this.redisClient.set(this.getUserToGameKey(userId, 'pending'), gameId);
-        await this.redisClient.set(this.getGameToUserKey(gameId, 'pending'), userId);
     }
     async removeGame(gameId, state) {
         const gameKey = this.getGameToUserKey(gameId, state);
@@ -36,35 +29,64 @@ let GameService = class GameService {
     async findGameByUser(userId, state) {
         return this.redisClient.get(this.getUserToGameKey(userId, state));
     }
-    async findFirstPendingGame() {
-        const games = await this.redisClient.keys(this.getGameToUserKey('*', 'pending'));
-        if (!games.length)
-            return null;
-        const gameId = games[0].replace(this.getGameToUserKey('', 'pending'), '');
-        const userId = await this.redisClient.get(games[0]);
-        return {
-            gameId,
-            userId,
-        };
-    }
-    async createActiveGame(gameId, userId1, userId2) {
-        const board = new Array(42).fill(0);
+    async createActiveGame(data) {
+        const { gameId, userId1, userId2, username1, username2 } = data;
+        const first = Math.random() < 0.5 ? userId1 : userId2;
         const results = await Promise.all([
-            this.setUserToGame(userId1, gameId, 'active'),
-            this.setUserToGame(userId2, gameId, 'active'),
-            this.redisClient.rpush(this.getActiveGameStateKey(gameId), ...board),
+            this.setInitialBoardToGame(gameId),
+            this.setActiveGameState(data.gameId, {
+                first,
+                turn: first,
+                userId1,
+                userId2,
+                username1,
+                username2,
+            }),
         ]);
         return {
+            board: results[0].board,
+            turn: first,
+            first,
             userId1,
             userId2,
+            username1,
+            username2,
             gameId,
         };
+    }
+    async getGameState(gameId) {
+        const board = await this.getActiveGameBoard(gameId);
+        const info = await this.getActiveGameInfo(gameId);
+        return Object.assign({ board }, info);
     }
     setGameToUser(gameId, userId, state) {
         this.redisClient.set(this.getGameToUserKey(gameId, state), userId);
     }
-    setUserToGame(userId, gameId, state) {
-        this.redisClient.set(this.getUserToGameKey(userId, state), gameId);
+    getPlayersByGame(gameId) {
+        return this.redisClient.lrange(this.getKeyActiveGamePlayers(gameId), 0, -1);
+    }
+    getActiveGameBoard(gameId) {
+        return this.redisClient.lrange(this.getKeyActiveGameBoard(gameId), 0, -1);
+    }
+    getGameTurn(gameId) {
+        return this.redisClient.get(this.getKeyActiveGameTurn(gameId));
+    }
+    setPlayersToGame(gameId, userId1, userdId2) {
+        this.redisClient.rpush(this.getKeyActiveGamePlayers(gameId), userId1, userdId2);
+    }
+    applyChanges(gameId, game) {
+        return Promise.all([
+            this.redisClient.lset(`gameboard:${gameId}`, game.last, game.board[game.last]),
+            this.redisClient.hset(`gamestate:${gameId}`, 'turn', game.state.turn),
+        ]);
+    }
+    setInitialBoardToGame(gameId) {
+        const board = new Array(42).fill('0');
+        const result = this.redisClient.rpush(this.getKeyActiveGameBoard(gameId), ...board);
+        return {
+            result,
+            board,
+        };
     }
     getGameToUserKey(gameId, state) {
         return `${state}:${gameId}`;
@@ -72,10 +94,22 @@ let GameService = class GameService {
     getUserToGameKey(userId, state) {
         return `${state}:${userId}`;
     }
-    getActiveGameToUserKey(gameId) {
-        return `act-game:${gameId}`;
+    setActiveGameState(gameId, state) {
+        return this.redisClient.hset(this.getKeyActiveGameState(gameId), state);
     }
-    getActiveGameStateKey(gameId) {
+    getActiveGameInfo(gameId) {
+        return this.redisClient.hgetall(this.getKeyActiveGameState(gameId));
+    }
+    getKeyActiveGamePlayers(gameId) {
+        return `gameplayers:${gameId}`;
+    }
+    getKeyActiveGameBoard(gameId) {
+        return `gameboard:${gameId}`;
+    }
+    getKeyActiveGameTurn(gameId) {
+        return `gameturn:${gameId}`;
+    }
+    getKeyActiveGameState(gameId) {
         return `gamestate:${gameId}`;
     }
 };

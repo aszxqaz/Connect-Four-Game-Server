@@ -1,3 +1,4 @@
 export declare enum Messages {
-    CREATE_GAME = "createGame"
+    CREATE_GAME = "createGame",
+    ACTIVE_GAME_ACTION = "action"
 }

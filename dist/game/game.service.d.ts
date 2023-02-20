@@ -1,23 +1,43 @@
 import { Redis } from 'ioredis';
+import { CreateGameArgs } from './types';
+import { GameLogic } from './BoardLogic';
 export declare class GameService {
     private readonly redisClient;
     constructor(redisClient: Redis);
-    createPendingGame(userId: string): Promise<void>;
     removeGame(gameId: string, state: 'pending' | 'active'): Promise<void>;
     findGameByUser(userId: string, state: 'pending' | 'active'): Promise<string>;
-    findFirstPendingGame(): Promise<{
-        gameId: string;
-        userId: string;
-    }>;
-    createActiveGame(gameId: string, userId1: string, userId2: string): Promise<{
+    createActiveGame(data: CreateGameArgs): Promise<{
+        board: any[];
+        turn: string;
+        first: string;
         userId1: string;
         userId2: string;
+        username1: string;
+        username2: string;
         gameId: string;
     }>;
+    getGameState(gameId: string): Promise<{
+        userId1: string;
+        username1: string;
+        userId2: string;
+        username2: string;
+        turn: string;
+        first: string;
+        board: string[];
+    }>;
     private setGameToUser;
-    private setUserToGame;
+    private getPlayersByGame;
+    private getActiveGameBoard;
+    private getGameTurn;
+    private setPlayersToGame;
+    applyChanges(gameId: string, game: GameLogic): Promise<["OK", number]>;
+    private setInitialBoardToGame;
     private getGameToUserKey;
     private getUserToGameKey;
-    private getActiveGameToUserKey;
-    private getActiveGameStateKey;
+    private setActiveGameState;
+    private getActiveGameInfo;
+    private getKeyActiveGamePlayers;
+    private getKeyActiveGameBoard;
+    private getKeyActiveGameTurn;
+    private getKeyActiveGameState;
 }
